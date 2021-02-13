@@ -1,5 +1,5 @@
 # bot.py
-import os, discord, urllib.request, urllib.error, urllib.parse, json
+import os, discord, urllib.request, urllib.error, urllib.parse, json, ssl
 from dotenv import load_dotenv
 
 url_udcc="https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=union-drive-marketplace-2-2"
@@ -16,9 +16,9 @@ headers = {
 
 udcc_cc_b, udcc_cc_l, udcc_cc_d, udcc_p_b, udcc_p_l, udcc_p_d, udcc_d_b, udcc_d_l, udcc_d_d, udcc_pa_b, udcc_pa_l, udcc_pa_d = [],[],[],[],[],[],[],[],[],[],[],[]
 windows_s_l, windows_s_d, windows_z_l, windows_z_d, windows_sl_l, windows_sl_d, windows_sv_l, windows_sv_d = [],[],[],[],[],[],[],[]
-
+gcontext = ssl.SSLContext()
 request=urllib.request.Request(url_windows,None,headers)
-with urllib.request.urlopen(request) as url:
+with urllib.request.urlopen(request, context=gcontext) as url:
     data = json.loads(url.read().decode())
 
 for time in data[0]["menus"]:
