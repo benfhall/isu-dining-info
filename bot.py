@@ -3,9 +3,7 @@ import os, discord, urllib.request, urllib.error, urllib.parse, json, ssl
 from dotenv import load_dotenv
 from discord.ext import tasks
 
-url_udcc="https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=union-drive-marketplace-2-2"
-url_windows="https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=friley-windows-2-2"
-url_seasons="https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=seasons-marketplace-2-2"
+urls = ["https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=union-drive-marketplace-2-2","https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=friley-windows-2-2","https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=seasons-marketplace-2-2"]
 
 user_agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
 headers = {
@@ -17,6 +15,7 @@ headers = {
         'Connection': 'keep-alive'
     }
 
+gcontext = ssl.SSLContext()
 ssl._create_default_https_context = ssl._create_unverified_context
 
 load_dotenv()
@@ -37,43 +36,25 @@ async def load_menus():
     global udcc
     global windows
     global seasons
-
-    print('Reloading Menus...')
-    gcontext = ssl.SSLContext()
-    request=urllib.request.Request(url_windows,None,headers)
-    with urllib.request.urlopen(request, context=gcontext) as url:
-        data = json.loads(url.read().decode())
-
     udcc = [[[]for c in range(3)] for r in range(6)]
     windows = [[[]]for r in range(2) for r in range(4)]
     seasons = [[[]for c in range(3)] for r in range(6)]
-    
-    windows_bar = {'Simmer': 0, 'Zest': 1, 'Slice\'s': 2, 'Savor': 3}
-    windows_time = {'Lunch': 0, 'Dinner': 1}
-    for time in data[0]["menus"]:
-        for bar in time["menuDisplays"]:
-            for food in bar['categories'][0]['menuItems']:
-                windows[windows_bar.get(bar['name'])][windows_time.get(time['section'])].append(food['name'])
 
-    request=urllib.request.Request(url_udcc,None,headers)
-    with urllib.request.urlopen(request) as url:
-        data = json.loads(url.read().decode())
-    udcc_bar = {'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3, 'Sugar Sugar': 4, 'Sprout': 5}
-    udcc_time = {'Breakfast': 0, 'Lunch': 1, 'Dinner': 2}
-    for time in data[0]["menus"]:
-        for bar in time["menuDisplays"]:
-            for food in bar['categories'][0]['menuItems']:
-                udcc[udcc_bar.get(bar['name'])][udcc_time.get(time['section'])].append(food['name'])
+    bars = [{'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3, 'Sugar Sugar': 4, 'Sprout': 5},{'Simmer': 0, 'Zest': 1, 'Slice\'s': 2, 'Savor': 3},{'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2, 'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5}]
+    times = [{'Breakfast': 0, 'Lunch': 1, 'Dinner': 2},{'Lunch': 0, 'Dinner': 1},{'Lunch': 0, 'Dinner': 1, 'Daily Menu': 2}]
+    buildings = {0:udcc,1:windows,2:seasons}
+    index = 0
 
-    request=urllib.request.Request(url_seasons,None,headers)
-    with urllib.request.urlopen(request) as url:
-        data = json.loads(url.read().decode())
-    seasons_time = {'Lunch': 0, 'Dinner': 1, 'Daily Menu': 2}
-    seasons_bar = {'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2, 'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5}
-    for time in data[0]["menus"]:
-        for bar in time["menuDisplays"]:
-            for food in bar['categories'][0]['menuItems']:
-                seasons[seasons_bar.get(bar['name'])][seasons_time.get(time['section'])].append(food['name'])
+    print('Reloading Menus...')
+    for url in urls:
+        request=urllib.request.Request(url,None,headers)
+        with urllib.request.urlopen(request, context=gcontext) as url:
+            data = json.loads(url.read().decode())
+        for time in data[0]["menus"]:
+            for bar in time["menuDisplays"]:
+                for food in bar['categories'][0]['menuItems']:
+                    buildings.get(index)[bars[index].get(bar['name'])][times[index].get(time['section'])].append(food['name'])
+        index += 1
     print("Complete!")
 
 @client.event
@@ -84,12 +65,14 @@ async def on_message(message):
     CLOSED_UDCC = "\nLooks like Union Drive Marketplace is closed, or you need to reload the menus!"
     CLOSED_WINDOWS = "\nLooks like Friley Windows is closed, or you need to reload the menus!"
     CLOSED_SEASONS = "\nLooks like Seasons Marketplace is closed, or you need to reload the menus!"
+    UDCC_HAS = "Union Drive Marketplace has "
+    WINDOWS_HAS = "Friley Windows has "
+    SEASONS_HAS = "Seasons Marketplace has "
 
     if '!reload' in message.content.lower():
         await load_menus()
         await message.channel.send("Reloaded Menus!")
     if '!help' in message.content.lower():
-        response = ""
         response = "!**<building>** **<time>** - *find the menu for given <time> at given <building>*\n\n**<time>** - Breakfast/Lunch/Dinner *(breakfast not available for Windows)*\n\n**<building>** - windows/udcc\n\n!**reload** - *reloads the menu.*\n\n!**<tendies/nuggies/wings> <time>** - *checks if there are food, given time.*"
         await message.channel.send(response)
     if '!udcc breakfast' in message.content.lower():
@@ -266,7 +249,7 @@ async def on_message(message):
                 for food in bar[2]:
                     if "tender" in food.lower():
                         print(food)
-                        response += "Union Drive Marketplace has " + food + ".\n"
+                        response += UDCC_HAS + food + ".\n"
         closed = 1
         for bar in windows[1]:
             if not bar:
@@ -278,7 +261,7 @@ async def on_message(message):
             for bar in windows:
                 for food in bar[1]:
                     if "nugget" in food:
-                        response += "Friley Windows has " + food + ".\n"
+                        response += WINDOWS_HAS + food + ".\n"
         closed = 1
         for bar in seasons[1]:
             if not bar:
@@ -290,7 +273,7 @@ async def on_message(message):
             for bar in seasons:
                 for food in bar[1]:
                     if "nugget" in food:
-                        response += "Seasons Marketplace has " + food + ".\n"
+                        response += SEASONS_HAS + food + ".\n"
         if response == "":
             response += "None of the given dining centers has Tendies :("
         await message.channel.send(response)
@@ -308,7 +291,7 @@ async def on_message(message):
                 for food in bar[1]:
                     if "tender" in food.lower():
                         print(food)
-                        response += "Union Drive Marketplace has " + food + ".\n"
+                        response += UDCC_HAS + food + ".\n"
         closed = 1
         for bar in windows[0]:
             if not bar:
@@ -320,7 +303,7 @@ async def on_message(message):
             for bar in windows:
                 for food in bar[0]:
                     if "nugget" in food:
-                        response += "Friley Windows has " + food + ".\n"
+                        response += WINDOWS_HAS + food + ".\n"
         closed = 1
         for bar in seasons[0]:
             if not bar:
@@ -332,7 +315,7 @@ async def on_message(message):
             for bar in seasons:
                 for food in bar[0]:
                     if "nugget" in food:
-                        response += "Seasons Marketplace has " + food + ".\n"
+                        response += SEASONS_HAS + food + ".\n"
         if response == "":
             response += "None of the given dining centers has Tendies :("
         await message.channel.send(response)
@@ -350,7 +333,7 @@ async def on_message(message):
                 for food in bar[2]:
                     if "nugget" in food.lower():
                         print(food)
-                        response += "Union Drive Marketplace has " + food + ".\n"
+                        response += UDCC_HAS + food + ".\n"
         closed = 1
         for bar in windows[1]:
             if not bar:
@@ -362,7 +345,7 @@ async def on_message(message):
             for bar in windows:
                 for food in bar[1]:
                     if "nugget" in food:
-                        response += "Friley Windows has " + food + ".\n"
+                        response += WINDOWS_HAS + food + ".\n"
         closed = 1
         for bar in seasons[1]:
             if not bar:
@@ -374,7 +357,7 @@ async def on_message(message):
             for bar in seasons:
                 for food in bar[1]:
                     if "nugget" in food:
-                        response += "Seasons Marketplace has " + food + ".\n"
+                        response += SEASONS_HAS + food + ".\n"
         if response == "":
             response += "None of the given dining centers has Nuggies :("
         await message.channel.send(response)
@@ -392,7 +375,7 @@ async def on_message(message):
                 for food in bar[1]:
                     if "nugget" in food.lower():
                         print(food)
-                        response += "Union Drive Marketplace has " + food + ".\n"
+                        response += UDCC_HAS + food + ".\n"
         closed = 1
         for bar in windows[0]:
             if not bar:
@@ -404,7 +387,7 @@ async def on_message(message):
             for bar in windows:
                 for food in bar[0]:
                     if "nugget" in food:
-                        response += "Friley Windows has " + food + ".\n"
+                        response += WINDOWS_HAS + food + ".\n"
         closed = 1
         for bar in seasons[0]:
             if not bar:
@@ -416,7 +399,7 @@ async def on_message(message):
             for bar in seasons:
                 for food in bar[0]:
                     if "nugget" in food:
-                        response += "Seasons Marketplace has " + food + ".\n"
+                        response += SEASONS_HAS + food + ".\n"
         if response == "":
             response += "None of the given dining centers has Nuggies :("
         await message.channel.send(response)
@@ -434,7 +417,7 @@ async def on_message(message):
                 for food in bar[2]:
                     if "wing" in food.lower():
                         print(food)
-                        response += "Union Drive Marketplace has " + food + ".\n"
+                        response += UDCC_HAS + food + ".\n"
         closed = 1
         for bar in windows[1]:
             if not bar:
@@ -446,7 +429,7 @@ async def on_message(message):
             for bar in windows:
                 for food in bar[1]:
                     if "wing" in food:
-                        response += "Friley Windows has " + food + ".\n"
+                        response += WINDOWS_HAS + food + ".\n"
         closed = 1
         for bar in seasons[1]:
             if not bar:
@@ -458,7 +441,7 @@ async def on_message(message):
             for bar in seasons:
                 for food in bar[1]:
                     if "wing" in food:
-                        response += "Seasons Marketplace has " + food + ".\n"
+                        response += SEASONS_HAS + food + ".\n"
         if response == "":
             response += "None of the given dining centers has Wings :("
         await message.channel.send(response)
@@ -476,7 +459,7 @@ async def on_message(message):
                 for food in bar[1]:
                     if "wing" in food.lower():
                         print(food)
-                        response += "Union Drive Marketplace has " + food + ".\n"
+                        response += UDCC_HAS + food + ".\n"
         closed = 1
         for bar in windows[0]:
             if not bar:
@@ -488,7 +471,7 @@ async def on_message(message):
             for bar in windows:
                 for food in bar[0]:
                     if "wing" in food:
-                        response += "Friley Windows has " + food + ".\n"
+                        response += WINDOWS_HAS + food + ".\n"
         closed = 1
         for bar in seasons[0]:
             if not bar:
@@ -500,7 +483,7 @@ async def on_message(message):
             for bar in seasons:
                 for food in bar[0]:
                     if "wing" in food:
-                        response += "Seasons Marketplace has " + food + ".\n"
+                        response += SEASONS_HAS + food + ".\n"
         if response == "":
             response += "None of the given dining centers has Wings :("
         await message.channel.send(response)
