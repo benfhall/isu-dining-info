@@ -112,10 +112,11 @@ def give_menu(arg, place):
                     rating_score.append(get_score(food,place))
                     rated_food.append(food)
                     response += food + "\n"
+    response += "```"
     try:
         max_index = rating_score.index(max(rating_score))
         if rating_score[max_index] != 0:
-            response += "```Your peers recommend the following dishes: \n\n"
+            response += "Your peers recommend the following dishes: \n\n"
             for x in range(3):
                 max_index = rating_score.index(max(rating_score))
                 if rating_score[max_index] == 0:
@@ -123,9 +124,10 @@ def give_menu(arg, place):
                 response += rated_food[max_index] + " (+" + str(rating_score[max_index]) + ")\n"
                 rated_food.pop(max_index)
                 rating_score.pop(max_index)
-            response += "\nRecommend your favorite dishes with the command, !upvote [dish] and !downvote [dish]```"
+            response += "\n"
     except ValueError:
         pass
+    response += "Recommend your favorite dishes with the command, !upvote [dish] and !downvote [dish]```"
     return response
 
 @bot.event
