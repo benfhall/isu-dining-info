@@ -3,15 +3,15 @@ import os, discord, urllib.request, urllib.error, urllib.parse, json, ssl
 from dotenv import load_dotenv
 from discord.ext import tasks, commands
 
-BAR_TITLES = [["\n**Cardinal Canteen**\n","\n**Picoso**:\n","\n**Dagwood's**:\n","\n**Parma's**:\n","\n**Sugar Sugar**:\n","\n**Sprout**:\n"],["\n**Simmer**\n","\n**Zest**:\n","\n**Slice**:\n","\n**Savor**:\n"],["\n**Hickory's**\n","\n**Wood Grill**:\n","\n**Bonsai**:\n","\n**Cocoa Bean**:\n","\n**Olive Branch**:\n","\n**Bushel Basket**:\n"]]
+BAR_TITLES = [["\n**Cardinal Canteen**:\n","\n**Picoso**:\n","\n**Dagwood's**:\n","\n**Parma's**:\n","\n**Sugar Sugar**:\n","\n**Sprout**:\n","\n**Saikuron**:\n"],["\n**Simmer**\n","\n**Zest**:\n","\n**Slice**:\n","\n**Savor**:\n","\n**Chopped**\n","\n**Delish**\n"],["\n**Hickory's**\n","\n**Wood Grill**:\n","\n**Bonsai**:\n","\n**Cocoa Bean**:\n","\n**Olive Branch**:\n","\n**Bushel Basket**:\n"]]
 CLOSED = ["\nLooks like "," is closed for ", " or you need to reload the menus!"]
 TITLES = ["**Union Drive Marketplace**","**Friley Windows**","**Seasons Marketplace**"]
-OFFSET = [0,1,1]
+OFFSET = [0,1,0]
 ALL_TIMES = ["breakfast","lunch","dinner","daily"]
 MEAL_NAME = ["**Breakfast**","**Lunch**","**Dinner**","**Daily**"]
 
-BARS = [{'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3, 'Sugar Sugar': 4, 'Sprout': 5},{'Simmer': 0, 'Zest': 1, 'Slice\'s': 2, 'Savor': 3},{'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2, 'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5}]
-TIMES = [{'Breakfast': 0, 'Lunch': 1, 'Dinner': 2},{'Lunch': 0, 'Dinner': 1},{'Lunch': 0, 'Dinner': 1, 'Daily Menu': 2}]
+BARS = [{'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3, 'Sugar Sugar': 4, 'Sprout': 5, 'Saikuron': 6},{'Simmer': 0, 'Zest': 1, 'Slice': 2, 'Savor': 3,'Chopped':4,'Delish':5},{'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2, 'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5}]
+TIMES = [{'Breakfast': 0, 'Lunch': 1, 'Dinner': 2},{'Lunch': 0, 'Dinner': 1},{'Breakfast':0,'Lunch': 1, 'Dinner': 2, 'Daily Menu': 3}]
 
 INVALID_USAGE = "**Invalid Usage.**\n*use !help for help.*"
 URLS = ["https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=union-drive-marketplace-2-2","https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=friley-windows-2-2","https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=seasons-marketplace-2-2"]
@@ -24,9 +24,12 @@ HEADERS = {
         'Connection': 'keep-alive'
     }
 
-udcc = [[[]for c in range(3)] for r in range(6)]
-windows = [[[]for c in range(2)] for r in range(4)]
-seasons = [[[]for c in range(3)] for r in range(6)]
+udcc = [[[]for c in range(3)] for r in range(8)]
+windows = [[[]for c in range(2)] for r in range(6)]
+seasons = [[[]for c in range(4)] for r in range(6)]
+foods = [[]for c in range(3)]
+food_likes = [[[]]for c in range(3)]
+food_dislikes = [[[]]for c in range(3)]
 BUILDINGS = {0:udcc,1:windows,2:seasons}
 
 gcontext = ssl.SSLContext()
@@ -44,12 +47,12 @@ async def load_menus():
     global TIMES
     global BUILDINGS
 
-    udcc = [[[]for c in range(3)] for r in range(6)]
-    windows = [[[]for c in range(2)] for r in range(4)]
-    seasons = [[[]for c in range(3)] for r in range(6)]
+    udcc = [[[]for c in range(3)] for r in range(7)]
+    windows = [[[]for c in range(2)] for r in range(6)]
+    seasons = [[[]for c in range(4)] for r in range(6)]
 
-    BARS = [{'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3, 'Sugar Sugar': 4, 'Sprout': 5},{'Simmer': 0, 'Zest': 1, 'Slice\'s': 2, 'Savor': 3},{'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2, 'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5}]
-    TIMES = [{'Breakfast': 0, 'Lunch': 1, 'Dinner': 2},{'Lunch': 0, 'Dinner': 1},{'Lunch': 0, 'Dinner': 1, 'Daily Menu': 2}]
+    BARS = [{'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3, 'Sugar Sugar': 4, 'Sprout': 5, 'Saikuron': 6},{'Simmer': 0, 'Zest': 1, 'Slice': 2, 'Savor': 3, 'Chopped': 4, 'Delish': 5},{'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2, 'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5}]
+    TIMES = [{'Breakfast': 0, 'Lunch': 1, 'Dinner': 2},{'Lunch': 0, 'Dinner': 1},{'Breakfast':0,'Lunch': 1, 'Dinner': 2, 'Daily Menu': 3}]
     BUILDINGS = {0:udcc,1:windows,2:seasons}
     cindex = 0
 
@@ -60,8 +63,14 @@ async def load_menus():
             data = json.loads(url.read().decode())
         for mealtime in data[0]["menus"]:
             for bar in mealtime["menuDisplays"]:
-                for food in bar['categories'][0]['menuItems']:
-                    BUILDINGS.get(cindex)[BARS[cindex].get(bar['name'])][TIMES[cindex].get(mealtime['section'])].append(food['name'])
+                for food_type in bar['categories']:
+                    for food in food_type['menuItems']:
+                        BUILDINGS.get(cindex)[BARS[cindex].get(bar['name'])][TIMES[cindex].get(mealtime['section'])].append(food['name'])
+                        if food['name'] not in foods[cindex]:
+                            foods[cindex].append(food['name'])
+                            food_likes[cindex].append([])
+                            food_dislikes[cindex].append([])
+
         cindex += 1
     print("Complete!")
     
@@ -84,6 +93,7 @@ def give_menu(arg, place):
             response += BAR_TITLES[place][counter]
             counter += 1
             for food in bar[TIMES[place].get(arg)]:
+                
                 response += food
                 response += "\n"
     return response
@@ -92,6 +102,20 @@ def give_menu(arg, place):
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
     await load_menus()
+
+@bot.command(pass_context=True)
+async def help(ctx, time=None):
+    await ctx.channel.send("""```
+![building] [time]      :   find the menu for given [time] at given [building]
+!search [term] [time]   :   searches for [term] at all dining centers, given [time].
+!tendies [time] :   searches for tender, [time] is optional.
+!nuggies [time] :   searches for nugget, [time] is optional.
+!wingies [time]   :   searches for wing, [time] is optional.
+!reload         :   reloads the menu.
+!help           :   displays options and usage of commands.\n
+    [building]  :   udcc/windows/seasons
+    [time]      :   breakfast/lunch/dinner (breakfast not available for Windows)
+```""")
 
 @bot.command(pass_context=True)
 async def udcc(ctx, arg=None):
@@ -113,7 +137,7 @@ async def windows(ctx, arg=None):
 
 @bot.command(pass_context=True)
 async def seasons(ctx, arg=None):
-    args = ["lunch","dinner","daily"]
+    args = ["breakfast","lunch","dinner","daily"]
     if match_args(arg, args):
         response = give_menu(arg.capitalize(), 2)
     else:
@@ -180,18 +204,54 @@ async def reload(ctx, time=None):
     await load_menus()
     await ctx.channel.send("Reloaded menus!")
 
+async def vote(arg, food, ctx):
+    ARR = {1:food_likes,-1:food_dislikes}
+    VOTE_ALIGN = {1:"upvote",-1:"downvote"}
+    index = 0
+    f_index = 0
+    if food is None:
+        await ctx.channel.send(INVALID_USAGE)
+    else:
+        for centers in foods:
+            for meal in centers:
+                if food in meal:
+                    await ctx.channel.send("Did you mean: *" + meal + "* from *" + TITLES[index] + "*? (y/n)")
+                    msg = await bot.wait_for('message')
+                    if msg.content == 'y':
+                        if (msg.author.id not in ARR.get(arg)[index][f_index]):
+                            ARR.get(arg)[index][f_index].append(msg.author.id)
+                            try:
+                                ARR.get(arg*(-1))[index][f_index].remove(msg.author.id)
+                            except ValueError:
+                                pass
+                            await ctx.channel.send(VOTE_ALIGN.get(arg).capitalize() + ' Sent!')
+                            break
+                        else:
+                            await ctx.channel.send('You can\'t ' + VOTE_ALIGN.get(arg) + ' a food you\'ve already ' + VOTE_ALIGN.get(arg) + 'd!')
+                            print(ARR.get(arg)[index][f_index])
+                            print(ARR.get(arg*(-1))[index][f_index])
+                            break        
+                f_index += 1
+            index += 1
+
 @bot.command(pass_context=True)
-async def help(ctx, time=None):
-    await ctx.channel.send("""```
-![building] [time]      :   find the menu for given [time] at given [building]
-!search [term] [time]   :   searches for [term] at all dining centers, given [time].
-!tendies [time] :   searches for tender, [time] is optional.
-!nuggies [time] :   searches for nugget, [time] is optional.
-!wingies [time]   :   searches for wing, [time] is optional.
-!reload         :   reloads the menu.
-!help           :   displays options and usage of commands.\n
-    [building]  :   udcc/windows/seasons
-    [time]      :   breakfast/lunch/dinner (breakfast not available for Windows)
-```""")
-                
+async def upvote(ctx, food=None):
+    await vote(1, food, ctx)
+
+@bot.command(pass_context=True)
+async def downvote(ctx, food=None):
+    await vote(-1, food, ctx)
+
+@bot.command(pass_context=True)
+async def get_score(ctx, food):
+    score, f_index, index = 0,0,0
+    for centers in foods:
+        for meal in centers:
+            if food in meal:
+                score += food_likes[index][f_index].len()
+                score -= food_dislikes[index][f_index].len()
+            f_index += 1
+        index += 1
+    await ctx.channel.send(score)
+                          
 bot.run(DISCORD_TOKEN)
