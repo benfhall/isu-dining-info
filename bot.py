@@ -1,13 +1,22 @@
 # bot.py
 import os, discord, urllib.request, urllib.error, urllib.parse, json, ssl
 from dotenv import load_dotenv
-from discord.ext import tasks
+from discord.ext import tasks, commands
 
-urls = ["https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=union-drive-marketplace-2-2","https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=friley-windows-2-2","https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=seasons-marketplace-2-2"]
+BAR_TITLES = [["\n**Cardinal Canteen**\n","\n**Picoso**:\n","\n**Dagwood's**:\n","\n**Parma's**:\n","\n**Sugar Sugar**:\n","\n**Sprout**:\n"],["\n**Simmer**\n","\n**Zest**:\n","\n**Slice**:\n","\n**Savor**:\n"],["\n**Hickory's**\n","\n**Wood Grill**:\n","\n**Bonsai**:\n","\n**Cocoa Bean**:\n","\n**Olive Branch**:\n","\n**Bushel Basket**:\n"]]
+CLOSED = ["\nLooks like "," is closed for ", " or you need to reload the menus!"]
+TITLES = ["**Union Drive Marketplace**","**Friley Windows**","**Seasons Marketplace**"]
+OFFSET = [0,1,1]
+ALL_TIMES = ["breakfast","lunch","dinner","daily"]
+MEAL_NAME = ["**Breakfast**","**Lunch**","**Dinner**","**Daily**"]
 
-user_agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
-headers = {
-        'User-Agent':user_agent,
+BARS = [{'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3, 'Sugar Sugar': 4, 'Sprout': 5},{'Simmer': 0, 'Zest': 1, 'Slice\'s': 2, 'Savor': 3},{'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2, 'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5}]
+TIMES = [{'Breakfast': 0, 'Lunch': 1, 'Dinner': 2},{'Lunch': 0, 'Dinner': 1},{'Lunch': 0, 'Dinner': 1, 'Daily Menu': 2}]
+
+INVALID_USAGE = "**Invalid Usage.**\n*use !help for help.*"
+URLS = ["https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=union-drive-marketplace-2-2","https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=friley-windows-2-2","https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=seasons-marketplace-2-2"]
+HEADERS = {
+        'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
         'Accept-Encoding': 'none',
@@ -15,478 +24,174 @@ headers = {
         'Connection': 'keep-alive'
     }
 
-gcontext = ssl.SSLContext()
-ssl._create_default_https_context = ssl._create_unverified_context
-
-load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-
 udcc = [[[]for c in range(3)] for r in range(6)]
-windows = [[[]]for r in range(2) for r in range(4)]
+windows = [[[]for c in range(2)] for r in range(4)]
 seasons = [[[]for c in range(3)] for r in range(6)]
+BUILDINGS = {0:udcc,1:windows,2:seasons}
 
-client = discord.Client()
-
-@client.event
-async def on_ready():
-    print(f'{client.user} has connected to Discord!')
+gcontext = ssl.SSLContext()
+load_dotenv()
+ssl._create_default_https_context = ssl._create_unverified_context
+DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
+bot = commands.Bot(command_prefix="!", help_command=None)
 
 @tasks.loop(seconds=10800)
 async def load_menus():
     global udcc
     global windows
     global seasons
+    global BARS
+    global TIMES
+    global BUILDINGS
+
     udcc = [[[]for c in range(3)] for r in range(6)]
-    windows = [[[]]for r in range(2) for r in range(4)]
+    windows = [[[]for c in range(2)] for r in range(4)]
     seasons = [[[]for c in range(3)] for r in range(6)]
 
-    bars = [{'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3, 'Sugar Sugar': 4, 'Sprout': 5},{'Simmer': 0, 'Zest': 1, 'Slice\'s': 2, 'Savor': 3},{'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2, 'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5}]
-    times = [{'Breakfast': 0, 'Lunch': 1, 'Dinner': 2},{'Lunch': 0, 'Dinner': 1},{'Lunch': 0, 'Dinner': 1, 'Daily Menu': 2}]
-    buildings = {0:udcc,1:windows,2:seasons}
-    index = 0
+    BARS = [{'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3, 'Sugar Sugar': 4, 'Sprout': 5},{'Simmer': 0, 'Zest': 1, 'Slice\'s': 2, 'Savor': 3},{'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2, 'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5}]
+    TIMES = [{'Breakfast': 0, 'Lunch': 1, 'Dinner': 2},{'Lunch': 0, 'Dinner': 1},{'Lunch': 0, 'Dinner': 1, 'Daily Menu': 2}]
+    BUILDINGS = {0:udcc,1:windows,2:seasons}
+    cindex = 0
 
     print('Reloading Menus...')
-    for url in urls:
-        request=urllib.request.Request(url,None,headers)
+    for url in URLS:
+        request=urllib.request.Request(url,None,HEADERS)
         with urllib.request.urlopen(request, context=gcontext) as url:
             data = json.loads(url.read().decode())
-        for time in data[0]["menus"]:
-            for bar in time["menuDisplays"]:
+        for mealtime in data[0]["menus"]:
+            for bar in mealtime["menuDisplays"]:
                 for food in bar['categories'][0]['menuItems']:
-                    buildings.get(index)[bars[index].get(bar['name'])][times[index].get(time['section'])].append(food['name'])
-        index += 1
+                    BUILDINGS.get(cindex)[BARS[cindex].get(bar['name'])][TIMES[cindex].get(mealtime['section'])].append(food['name'])
+        cindex += 1
     print("Complete!")
+    
+def match_args(arg, args):
+    if arg is None:
+        return False
+    elif arg.lower() in args:
+        return True
+    else:
+        return False
 
-@client.event
-async def on_message(message):
-    UDCC_BARS = ["\n**Cardinal Canteen**\n","\n**Picoso**:\n","\n**Dagwood's**:\n","\n**Parma's**:\n","\n**Sugar Sugar**:\n","\n**Sprout**:\n"]
-    WINDOWS_BARS = ["\n**Simmer**\n","\n**Zest**:\n","\n**Slice**:\n","\n**Savor**:\n"]
-    SEASONS_BARS = ["\n**Hickory's**\n","\n**Wood Grill**:\n","\n**Bonsai**:\n","\n**Cocoa Bean**:\n","\n**Olive Branch**:\n","\n**Bushel Basket**:\n"]
-    CLOSED_UDCC = "\nLooks like Union Drive Marketplace is closed, or you need to reload the menus!"
-    CLOSED_WINDOWS = "\nLooks like Friley Windows is closed, or you need to reload the menus!"
-    CLOSED_SEASONS = "\nLooks like Seasons Marketplace is closed, or you need to reload the menus!"
-    UDCC_HAS = "Union Drive Marketplace has "
-    WINDOWS_HAS = "Friley Windows has "
-    SEASONS_HAS = "Seasons Marketplace has "
+def give_menu(arg, place):
+    counter = 0
+    response = ""
+    if is_closed(place, arg):
+        response += CLOSED[0] + TITLES[place] + CLOSED[1] + MEAL_NAME[TIMES[place].get(arg)+OFFSET[place]] + CLOSED[2]
+    else:
+        response += MEAL_NAME[TIMES[place].get(arg)+OFFSET[place]] + " at " + TITLES[place] + "\n"
+        for bar in BUILDINGS.get(place):
+            response += BAR_TITLES[place][counter]
+            counter += 1
+            for food in bar[TIMES[place].get(arg)]:
+                response += food
+                response += "\n"
+    return response
 
-    if '!reload' in message.content.lower():
-        await load_menus()
-        await message.channel.send("Reloaded Menus!")
-    if '!help' in message.content.lower():
-        response = "!**<building>** **<time>** - *find the menu for given <time> at given <building>*\n\n**<time>** - Breakfast/Lunch/Dinner *(breakfast not available for Windows)*\n\n**<building>** - windows/udcc\n\n!**reload** - *reloads the menu.*\n\n!**<tendies/nuggies/wings> <time>** - *checks if there are food, given time.*"
-        await message.channel.send(response)
-    if '!udcc breakfast' in message.content.lower():
-        counter = 0
-        closed = 1
-        response = "**Breakfast** at **Union Drive Marketplace:** \n"
-        for bar in udcc[0]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 1:
-            response += CLOSED_UDCC
-        else:
-            for bar in udcc:
-                response += UDCC_BARS[counter]
-                counter += 1
-                for food in bar[0]:
-                    response += food
-                    response += "\n"
-        await message.channel.send(response)
-    if '!udcc lunch' in message.content.lower():
-        counter = 0
-        closed = 1
-        response = "**Lunch** at **Union Drive Marketplace:** \n"
-        for bar in udcc[1]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 1:
-            response += CLOSED_UDCC
-        else:
-            for bar in udcc:
-                response += UDCC_BARS[counter]
-                counter += 1
-                for food in bar[1]:
-                    response += food
-                    response += "\n"
-        await message.channel.send(response)
-    if '!udcc dinner' in message.content.lower():
-        counter = 0
-        closed = 1
-        response = "**Dinner** at **Union Drive Marketplace:** \n"
-        for bar in udcc[2]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 1:
-            response += CLOSED_UDCC
-        else:
-            for bar in udcc:
-                response += UDCC_BARS[counter]
-                counter += 1
-                for food in bar[2]:
-                    response += food
-                    response += "\n"
-        await message.channel.send(response)
-    if '!windows lunch' in message.content.lower():
-        counter = 0
-        closed = 1
-        response = "**Lunch** at **Friley Windows:** \n"
-        for bar in windows[0]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 1:
-            response += CLOSED_WINDOWS
-        else:
-            for bar in windows:
-                response += WINDOWS_BARS[counter]
-                counter += 1
-                for food in bar[0]:
-                    response += food
-                    response += "\n"
-        await message.channel.send(response)
-    if '!windows dinner' in message.content.lower():
-        counter = 0
-        closed = 1
-        response = "**Dinner** at **Friley Windows:** \n"
-        for bar in windows[1]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 1:
-            response += CLOSED_WINDOWS
-        else:
-            for bar in windows:
-                response += WINDOWS_BARS[counter]
-                counter += 1
-                for food in bar[1]:
-                    response += food
-                    response += "\n"
-        await message.channel.send(response)
-    if '!seasons lunch' in message.content.lower():
-        counter = 0
-        closed = 1
-        response = "**Lunch** at **Seasons Marketplace:** \n"
-        for bar in seasons[0]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 1:
-            response += CLOSED_SEASONS
-        else:
-            for bar in seasons:
-                response += SEASONS_BARS[counter]
-                counter += 1
-                for food in bar[0]:
-                    response += food
-                    response += "\n"
-        await message.channel.send(response)
-    if '!seasons dinner' in message.content.lower():
-        counter = 0
-        closed = 1
-        response = "**Dinner** at **Seasons Marketplace:** \n"
-        for bar in seasons[1]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 1:
-            response += CLOSED_SEASONS
-        else:
-            for bar in seasons:
-                response += SEASONS_BARS[counter]
-                counter += 1
-                for food in bar[1]:
-                    response += food
-                    response += "\n"
-        await message.channel.send(response)
-    if '!seasons daily' in message.content.lower():
-        counter = 0
-        closed = 1
-        response = "**Daily Menu** at **Seasons Marketplace:** \n"
-        for bar in seasons[2]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 1:
-            response += CLOSED_SEASONS
-        else:
-            for bar in seasons:
-                response += SEASONS_BARS[counter]
-                counter += 1
-                for food in bar[2]:
-                    response += food
-                    response += "\n"
-        await message.channel.send(response)
-    if '!tendies dinner' in message.content.lower():
-        response = ""
-        closed = 1
-        for bar in udcc[2]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:
-            for bar in udcc:
-                for food in bar[2]:
-                    if "tender" in food.lower():
-                        print(food)
-                        response += UDCC_HAS + food + ".\n"
-        closed = 1
-        for bar in windows[1]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:      
-            for bar in windows:
-                for food in bar[1]:
-                    if "nugget" in food:
-                        response += WINDOWS_HAS + food + ".\n"
-        closed = 1
-        for bar in seasons[1]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:
-            for bar in seasons:
-                for food in bar[1]:
-                    if "nugget" in food:
-                        response += SEASONS_HAS + food + ".\n"
-        if response == "":
-            response += "None of the given dining centers has Tendies :("
-        await message.channel.send(response)
-    if '!tendies lunch' in message.content.lower():
-        response = ""
-        closed = 1
-        for bar in udcc[1]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:
-            for bar in udcc:
-                for food in bar[1]:
-                    if "tender" in food.lower():
-                        print(food)
-                        response += UDCC_HAS + food + ".\n"
-        closed = 1
-        for bar in windows[0]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:      
-            for bar in windows:
-                for food in bar[0]:
-                    if "nugget" in food:
-                        response += WINDOWS_HAS + food + ".\n"
-        closed = 1
-        for bar in seasons[0]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:
-            for bar in seasons:
-                for food in bar[0]:
-                    if "nugget" in food:
-                        response += SEASONS_HAS + food + ".\n"
-        if response == "":
-            response += "None of the given dining centers has Tendies :("
-        await message.channel.send(response)
-    if '!nuggies dinner' in message.content.lower():
-        response = ""
-        closed = 1
-        for bar in udcc[2]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:
-            for bar in udcc:
-                for food in bar[2]:
-                    if "nugget" in food.lower():
-                        print(food)
-                        response += UDCC_HAS + food + ".\n"
-        closed = 1
-        for bar in windows[1]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:      
-            for bar in windows:
-                for food in bar[1]:
-                    if "nugget" in food:
-                        response += WINDOWS_HAS + food + ".\n"
-        closed = 1
-        for bar in seasons[1]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:
-            for bar in seasons:
-                for food in bar[1]:
-                    if "nugget" in food:
-                        response += SEASONS_HAS + food + ".\n"
-        if response == "":
-            response += "None of the given dining centers has Nuggies :("
-        await message.channel.send(response)
-    if '!nuggies lunch' in message.content.lower():
-        response = ""
-        closed = 1
-        for bar in udcc[1]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:
-            for bar in udcc:
-                for food in bar[1]:
-                    if "nugget" in food.lower():
-                        print(food)
-                        response += UDCC_HAS + food + ".\n"
-        closed = 1
-        for bar in windows[0]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:      
-            for bar in windows:
-                for food in bar[0]:
-                    if "nugget" in food:
-                        response += WINDOWS_HAS + food + ".\n"
-        closed = 1
-        for bar in seasons[0]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:
-            for bar in seasons:
-                for food in bar[0]:
-                    if "nugget" in food:
-                        response += SEASONS_HAS + food + ".\n"
-        if response == "":
-            response += "None of the given dining centers has Nuggies :("
-        await message.channel.send(response)
-    if '!wings dinner' in message.content.lower():
-        response = ""
-        closed = 1
-        for bar in udcc[2]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:
-            for bar in udcc:
-                for food in bar[2]:
-                    if "wing" in food.lower():
-                        print(food)
-                        response += UDCC_HAS + food + ".\n"
-        closed = 1
-        for bar in windows[1]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:      
-            for bar in windows:
-                for food in bar[1]:
-                    if "wing" in food:
-                        response += WINDOWS_HAS + food + ".\n"
-        closed = 1
-        for bar in seasons[1]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:
-            for bar in seasons:
-                for food in bar[1]:
-                    if "wing" in food:
-                        response += SEASONS_HAS + food + ".\n"
-        if response == "":
-            response += "None of the given dining centers has Wings :("
-        await message.channel.send(response)
-    if '!wings lunch' in message.content.lower():
-        response = ""
-        closed = 1
-        for bar in udcc[1]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:
-            for bar in udcc:
-                for food in bar[1]:
-                    if "wing" in food.lower():
-                        print(food)
-                        response += UDCC_HAS + food + ".\n"
-        closed = 1
-        for bar in windows[0]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:      
-            for bar in windows:
-                for food in bar[0]:
-                    if "wing" in food:
-                        response += WINDOWS_HAS + food + ".\n"
-        closed = 1
-        for bar in seasons[0]:
-            if not bar:
-                closed = 1
-            else:
-                closed = 0
-                break
-        if closed == 0:
-            for bar in seasons:
-                for food in bar[0]:
-                    if "wing" in food:
-                        response += SEASONS_HAS + food + ".\n"
-        if response == "":
-            response += "None of the given dining centers has Wings :("
-        await message.channel.send(response)
+@bot.event
+async def on_ready():
+    print(f'{bot.user} has connected to Discord!')
+    await load_menus()
 
-load_menus.start()
-client.run(TOKEN)
+@bot.command(pass_context=True)
+async def udcc(ctx, arg=None):
+    args = ["breakfast","lunch","dinner"]
+    if match_args(arg, args):
+        response = give_menu(arg.capitalize(), 0)
+    else:
+        response = INVALID_USAGE
+    await ctx.channel.send(response)
+
+@bot.command(pass_context=True)
+async def windows(ctx, arg=None):
+    args = ["lunch","dinner"]
+    if match_args(arg, args):
+        response = give_menu(arg.capitalize(), 1)
+    else:
+        response = INVALID_USAGE
+    await ctx.channel.send(response)
+
+@bot.command(pass_context=True)
+async def seasons(ctx, arg=None):
+    args = ["lunch","dinner","daily"]
+    if match_args(arg, args):
+        response = give_menu(arg.capitalize(), 2)
+    else:
+        response = INVALID_USAGE
+    await ctx.channel.send(response)
+
+def is_closed(place,time):
+    for bar in BUILDINGS.get(place)[TIMES[place].get(time.capitalize())]:
+        if not not bar:
+            return False
+    return True
+
+def search_for(substring, time):
+    response = ""
+    if match_args(time,ALL_TIMES) and substring is not None:
+        for place in range(3):
+            if not is_closed(place,time):
+                for bar in BUILDINGS.get(place):
+                    for food in bar[TIMES[place].get(time.capitalize())]:
+                        if substring.lower() in food.lower():
+                            response += TITLES[place] + " has: *" + food + "* for " + MEAL_NAME[TIMES[place].get(time.capitalize())+OFFSET[place]] + ".\n"
+        if response == "":
+            response = "Search term: **" + substring + "** not found at **" + time + "**.\n" 
+    else:
+        response = "**Invalid Usage.** Please add a valid search term or time period.\n*use !help for help.*"
+    return response
+
+@bot.command(pass_context=True)
+async def search(ctx, substring=None, time=None):
+    await ctx.channel.send(search_for(substring,time))
+
+@bot.command(pass_context=True)
+async def tendies(ctx, time=None):
+    if time is None:
+        response = search_for("tender", "lunch") + search_for("tender", "dinner")
+    elif match_args(time,ALL_TIMES):
+        response = search_for("tender",time)
+    else:
+        response = INVALID_USAGE
+    await ctx.channel.send(response)
+
+@bot.command(pass_context=True)
+async def nuggies(ctx, time=None):
+    if time is None:
+        response = search_for("nugget", "lunch") + search_for("nugget", "dinner")
+    elif match_args(time,ALL_TIMES):
+        response = search_for("nugget",time)
+    else:
+        response = INVALID_USAGE
+    await ctx.channel.send(response)
+
+@bot.command(pass_context=True)
+async def wingies(ctx, time=None):
+    if time is None:
+        response = search_for("wing", "lunch") + search_for("wing", "dinner")
+    elif match_args(time,ALL_TIMES):
+        response = search_for("wing",time)
+    else:
+        response = INVALID_USAGE
+    await ctx.channel.send(response)
+
+@bot.command(pass_context=True)
+async def reload(ctx, time=None):
+    await load_menus()
+    await ctx.channel.send("Reloaded menus!")
+
+@bot.command(pass_context=True)
+async def help(ctx, time=None):
+    await ctx.channel.send("""```
+![building] [time]      :   find the menu for given [time] at given [building]
+!search [term] [time]   :   searches for [term] at all dining centers, given [time].
+!tendies [time] :   searches for tender, [time] is optional.
+!nuggies [time] :   searches for nugget, [time] is optional.
+!wingies [time]   :   searches for wing, [time] is optional.
+!reload         :   reloads the menu.
+!help           :   displays options and usage of commands.\n
+    [building]  :   udcc/windows/seasons
+    [time]      :   breakfast/lunch/dinner (breakfast not available for Windows)
+```""")
+                
+bot.run(DISCORD_TOKEN)
