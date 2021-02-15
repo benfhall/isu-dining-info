@@ -1,5 +1,5 @@
 # bot.py
-import os, discord, urllib.request, urllib.error, urllib.parse, json, ssl, numpy
+import os, discord, urllib.request, urllib.error, urllib.parse, json, ssl
 from dotenv import load_dotenv
 from discord.ext import tasks, commands
 
