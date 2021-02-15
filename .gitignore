@@ -4,3 +4,6 @@ __pycache__
 .vscode
 log.txt
 log.py
+food_dislikes
+food_likes
+food_list

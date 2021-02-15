@@ -2,6 +2,8 @@
 import os, discord, urllib.request, urllib.error, urllib.parse, json, ssl
 from dotenv import load_dotenv
 from discord.ext import tasks, commands
+import numpy as np
+from file_mgr import save_scores, load_scores
 
 BAR_TITLES = [["\n**Cardinal Canteen**:\n","\n**Picoso**:\n","\n**Dagwood's**:\n","\n**Parma's**:\n","\n**Sugar Sugar**:\n","\n**Sprout**:\n","\n**Saikuron**:\n","\n\n"],["\n**Simmer**\n","\n**Zest**:\n","\n**Slice**:\n","\n**Savor**:\n","\n**Chopped**\n","\n**Delish**\n","\n\n"],["\n**Hickory's**\n","\n**Wood Grill**:\n","\n**Bonsai**:\n","\n**Cocoa Bean**:\n","\n**Olive Branch**:\n","\n**Bushel Basket**:\n","\n\n"]]
 CLOSED = ["\nLooks like "," is closed for ", " or you need to reload the menus!"]
@@ -27,9 +29,9 @@ HEADERS = {
 udcc = [[[]for c in range(3)] for r in range(8)]
 windows = [[[]for c in range(2)] for r in range(6)]
 seasons = [[[]for c in range(4)] for r in range(6)]
-food_list = [[]for c in range(3)]
-food_likes = [[[]]for c in range(3)]
-food_dislikes = [[[]]for c in range(3)]
+food_list = np.array([[]for c in range(3)])
+food_likes = np.array([[[]]for c in range(3)])
+food_dislikes = np.array([[[]]for c in range(3)])
 BUILDINGS = {0:udcc,1:windows,2:seasons}
 
 gcontext = ssl.SSLContext()
@@ -46,10 +48,17 @@ async def load_menus():
     global BARS
     global TIMES
     global BUILDINGS
-
+    global food_likes
+    global food_dislikes
+    global food_list
+    
+    food_list = [[]for c in range(3)]
+    food_likes = ([[[]]for c in range(3)])
+    food_dislikes = ([[[]]for c in range(3)])
     udcc = [[[]for c in range(3)] for r in range(8)]
     windows = [[[]for c in range(2)] for r in range(7)]
     seasons = [[[]for c in range(4)] for r in range(7)]
+    
 
     BARS = [{'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3, 'Sugar Sugar': 4, 'Sprout': 5, 'Saikuron': 6, "":7},{'Simmer': 0, 'Zest': 1, 'Slice': 2, 'Savor': 3, 'Chopped': 4, 'Delish': 5,'':6},{'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2, 'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5,'':6}]
     TIMES = [{'Breakfast': 0, 'Lunch': 1, 'Dinner': 2},{'Lunch': 0, 'Dinner': 1},{'Breakfast':0,'Lunch': 1, 'Dinner': 2, 'Daily Menu': 3}]
@@ -67,14 +76,10 @@ async def load_menus():
                     for food in food_type['menuItems']:
                         try: 
                             BUILDINGS.get(cindex)[BARS[cindex].get(bar['name'])][TIMES[cindex].get(mealtime['section'])].append(food['name'])
-                            if food['name'] in food_list[cindex]:
-                                food_list[cindex].append(food['name'])
-                                food_likes[cindex].append([])
-                                food_dislikes[cindex].append([])
                         except TypeError:
                             print("Err: Bar name mismatch, putting in general category.")
                             BUILDINGS.get(cindex)[len(BARS[cindex]-1)][TIMES[cindex].get(mealtime['section'])].append(food['name'])
-                            if food['name'] in food_list[cindex]:
+                        if food['name'] not in food_list[cindex]:
                                 food_list[cindex].append(food['name'])
                                 food_likes[cindex].append([])
                                 food_dislikes[cindex].append([])
@@ -127,6 +132,7 @@ def give_menu(arg, place):
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
     await load_menus()
+    await load()
 
 @bot.command(pass_context=True)
 async def help(ctx, time=None):
@@ -248,7 +254,7 @@ async def vote(arg, food, ctx):
                             try:
                                 ARR.get(arg*(-1))[index][f_index].remove(msg.author.id)
                             except ValueError:
-                                pass
+                                print("Value ERR")
                             await ctx.channel.send(VOTE_ALIGN.get(arg).capitalize() + ' Sent!')
                             break
                         else:
@@ -274,12 +280,18 @@ def get_score(food, centers):
         f_index += 1
     return score
 
-@bot.command(pass_context=True)
-async def save(ctx):
-    await save_likes()
+@tasks.loop(seconds=1800)
+async def save():
+    await save_scores('food_likes',food_likes)
+    await save_scores('food_dislikes',food_dislikes)
+    await save_scores('food_list',food_list)
 
-@bot.command(pass_context=True)
-async def open(ctx):
-    await open_likes()
+async def load():
+    global food_likes
+    global food_dislikes
+    global food_list
+    food_likes = await load_scores('food_likes')
+    food_dislikes = await load_scores('food_dislikes')
+    food_list = await load_scores('food_list')
                           
 bot.run(DISCORD_TOKEN)
