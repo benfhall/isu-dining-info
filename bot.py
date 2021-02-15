@@ -1,16 +1,16 @@
 # bot.py
-import os, discord, urllib.request, urllib.error, urllib.parse, json, ssl
+import os, discord, urllib.request, urllib.error, urllib.parse, json, ssl, numpy
 from dotenv import load_dotenv
 from discord.ext import tasks, commands
 
-BAR_TITLES = [["\n**Cardinal Canteen**:\n","\n**Picoso**:\n","\n**Dagwood's**:\n","\n**Parma's**:\n","\n**Sugar Sugar**:\n","\n**Sprout**:\n","\n**Saikuron**:\n"],["\n**Simmer**\n","\n**Zest**:\n","\n**Slice**:\n","\n**Savor**:\n","\n**Chopped**\n","\n**Delish**\n"],["\n**Hickory's**\n","\n**Wood Grill**:\n","\n**Bonsai**:\n","\n**Cocoa Bean**:\n","\n**Olive Branch**:\n","\n**Bushel Basket**:\n"]]
+BAR_TITLES = [["\n**Cardinal Canteen**:\n","\n**Picoso**:\n","\n**Dagwood's**:\n","\n**Parma's**:\n","\n**Sugar Sugar**:\n","\n**Sprout**:\n","\n**Saikuron**:\n","\n\n"],["\n**Simmer**\n","\n**Zest**:\n","\n**Slice**:\n","\n**Savor**:\n","\n**Chopped**\n","\n**Delish**\n","\n\n"],["\n**Hickory's**\n","\n**Wood Grill**:\n","\n**Bonsai**:\n","\n**Cocoa Bean**:\n","\n**Olive Branch**:\n","\n**Bushel Basket**:\n","\n\n"]]
 CLOSED = ["\nLooks like "," is closed for ", " or you need to reload the menus!"]
 TITLES = ["**Union Drive Marketplace**","**Friley Windows**","**Seasons Marketplace**"]
 OFFSET = [0,1,0]
 ALL_TIMES = ["breakfast","lunch","dinner","daily"]
 MEAL_NAME = ["**Breakfast**","**Lunch**","**Dinner**","**Daily**"]
 
-BARS = [{'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3, 'Sugar Sugar': 4, 'Sprout': 5, 'Saikuron': 6},{'Simmer': 0, 'Zest': 1, 'Slice': 2, 'Savor': 3,'Chopped':4,'Delish':5},{'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2, 'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5}]
+BARS = [{'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3, 'Sugar Sugar': 4, 'Sprout': 5, 'Saikuron': 6, "":7},{'Simmer': 0, 'Zest': 1, 'Slice': 2, 'Savor': 3,'Chopped':4,'Delish':5,'':6},{'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2, 'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5,'':6}]
 TIMES = [{'Breakfast': 0, 'Lunch': 1, 'Dinner': 2},{'Lunch': 0, 'Dinner': 1},{'Breakfast':0,'Lunch': 1, 'Dinner': 2, 'Daily Menu': 3}]
 
 INVALID_USAGE = "**Invalid Usage.**\n*use !help for help.*"
@@ -27,7 +27,7 @@ HEADERS = {
 udcc = [[[]for c in range(3)] for r in range(8)]
 windows = [[[]for c in range(2)] for r in range(6)]
 seasons = [[[]for c in range(4)] for r in range(6)]
-foods = [[]for c in range(3)]
+food_list = [[]for c in range(3)]
 food_likes = [[[]]for c in range(3)]
 food_dislikes = [[[]]for c in range(3)]
 BUILDINGS = {0:udcc,1:windows,2:seasons}
@@ -47,11 +47,11 @@ async def load_menus():
     global TIMES
     global BUILDINGS
 
-    udcc = [[[]for c in range(3)] for r in range(7)]
-    windows = [[[]for c in range(2)] for r in range(6)]
-    seasons = [[[]for c in range(4)] for r in range(6)]
+    udcc = [[[]for c in range(3)] for r in range(8)]
+    windows = [[[]for c in range(2)] for r in range(7)]
+    seasons = [[[]for c in range(4)] for r in range(7)]
 
-    BARS = [{'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3, 'Sugar Sugar': 4, 'Sprout': 5, 'Saikuron': 6},{'Simmer': 0, 'Zest': 1, 'Slice': 2, 'Savor': 3, 'Chopped': 4, 'Delish': 5},{'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2, 'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5}]
+    BARS = [{'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3, 'Sugar Sugar': 4, 'Sprout': 5, 'Saikuron': 6, "":7},{'Simmer': 0, 'Zest': 1, 'Slice': 2, 'Savor': 3, 'Chopped': 4, 'Delish': 5,'':6},{'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2, 'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5,'':6}]
     TIMES = [{'Breakfast': 0, 'Lunch': 1, 'Dinner': 2},{'Lunch': 0, 'Dinner': 1},{'Breakfast':0,'Lunch': 1, 'Dinner': 2, 'Daily Menu': 3}]
     BUILDINGS = {0:udcc,1:windows,2:seasons}
     cindex = 0
@@ -65,11 +65,19 @@ async def load_menus():
             for bar in mealtime["menuDisplays"]:
                 for food_type in bar['categories']:
                     for food in food_type['menuItems']:
-                        BUILDINGS.get(cindex)[BARS[cindex].get(bar['name'])][TIMES[cindex].get(mealtime['section'])].append(food['name'])
-                        if food['name'] not in foods[cindex]:
-                            foods[cindex].append(food['name'])
-                            food_likes[cindex].append([])
-                            food_dislikes[cindex].append([])
+                        try: 
+                            BUILDINGS.get(cindex)[BARS[cindex].get(bar['name'])][TIMES[cindex].get(mealtime['section'])].append(food['name'])
+                            if food['name'] in food_list[cindex]:
+                                food_list[cindex].append(food['name'])
+                                food_likes[cindex].append([])
+                                food_dislikes[cindex].append([])
+                        except TypeError:
+                            print("Err: Bar name mismatch, putting in general category.")
+                            BUILDINGS.get(cindex)[len(BARS[cindex]-1)][TIMES[cindex].get(mealtime['section'])].append(food['name'])
+                            if food['name'] in food_list[cindex]:
+                                food_list[cindex].append(food['name'])
+                                food_likes[cindex].append([])
+                                food_dislikes[cindex].append([])
 
         cindex += 1
     print("Complete!")
@@ -84,18 +92,35 @@ def match_args(arg, args):
 
 def give_menu(arg, place):
     counter = 0
+    rating_score = []
+    rated_food = []
     response = ""
     if is_closed(place, arg):
         response += CLOSED[0] + TITLES[place] + CLOSED[1] + MEAL_NAME[TIMES[place].get(arg)+OFFSET[place]] + CLOSED[2]
     else:
         response += MEAL_NAME[TIMES[place].get(arg)+OFFSET[place]] + " at " + TITLES[place] + "\n"
         for bar in BUILDINGS.get(place):
-            response += BAR_TITLES[place][counter]
-            counter += 1
-            for food in bar[TIMES[place].get(arg)]:
-                
-                response += food
-                response += "\n"
+            if bar[TIMES[place].get(arg)]:  
+                response += BAR_TITLES[place][counter]
+                counter += 1
+                for food in bar[TIMES[place].get(arg)]:
+                    rating_score.append(get_score(food,place))
+                    rated_food.append(food)
+                    response += food + "\n"
+    try:
+        max_index = rating_score.index(max(rating_score))
+        if rating_score[max_index] != 0:
+            response += "```Your peers recommend the following dishes: \n\n"
+            for x in range(3):
+                max_index = rating_score.index(max(rating_score))
+                if rating_score[max_index] == 0:
+                    break
+                response += rated_food[max_index] + " (+" + str(rating_score[max_index]) + ")\n"
+                rated_food.pop(max_index)
+                rating_score.pop(max_index)
+            response += "\n\nRecommend your favorite dishes with the command, !upvote [dish] and !downvote [dish]```"
+    except ValueError:
+        pass
     return response
 
 @bot.event
@@ -148,7 +173,7 @@ def is_closed(place,time):
     for bar in BUILDINGS.get(place)[TIMES[place].get(time.capitalize())]:
         if not not bar:
             return False
-    return True
+    return False
 
 def search_for(substring, time):
     response = ""
@@ -212,7 +237,7 @@ async def vote(arg, food, ctx):
     if food is None:
         await ctx.channel.send(INVALID_USAGE)
     else:
-        for centers in foods:
+        for centers in food_list:
             for meal in centers:
                 if food in meal:
                     await ctx.channel.send("Did you mean: *" + meal + "* from *" + TITLES[index] + "*? (y/n)")
@@ -228,8 +253,6 @@ async def vote(arg, food, ctx):
                             break
                         else:
                             await ctx.channel.send('You can\'t ' + VOTE_ALIGN.get(arg) + ' a food you\'ve already ' + VOTE_ALIGN.get(arg) + 'd!')
-                            print(ARR.get(arg)[index][f_index])
-                            print(ARR.get(arg*(-1))[index][f_index])
                             break        
                 f_index += 1
             index += 1
@@ -242,16 +265,21 @@ async def upvote(ctx, food=None):
 async def downvote(ctx, food=None):
     await vote(-1, food, ctx)
 
-@bot.command(pass_context=True)
-async def get_score(ctx, food):
+def get_score(food, centers):
     score, f_index, index = 0,0,0
-    for centers in foods:
-        for meal in centers:
-            if food in meal:
-                score += food_likes[index][f_index].len()
-                score -= food_dislikes[index][f_index].len()
-            f_index += 1
-        index += 1
-    await ctx.channel.send(score)
+    for meal in food_list[centers]:
+        if food in meal:
+            score += len(food_likes[centers][f_index])
+            score -= len(food_dislikes[centers][f_index])
+        f_index += 1
+    return score
+
+@bot.command(pass_context=True)
+async def save(ctx):
+    await save_likes()
+
+@bot.command(pass_context=True)
+async def open(ctx):
+    await open_likes()
                           
 bot.run(DISCORD_TOKEN)
