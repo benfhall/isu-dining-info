@@ -123,7 +123,7 @@ def give_menu(arg, place):
                 response += rated_food[max_index] + " (+" + str(rating_score[max_index]) + ")\n"
                 rated_food.pop(max_index)
                 rating_score.pop(max_index)
-            response += "\n\nRecommend your favorite dishes with the command, !upvote [dish] and !downvote [dish]```"
+            response += "\nRecommend your favorite dishes with the command, !upvote [dish] and !downvote [dish]```"
     except ValueError:
         pass
     return response
@@ -142,6 +142,8 @@ async def help(ctx, time=None):
 !tendies [time] :   searches for tender, [time] is optional.
 !nuggies [time] :   searches for nugget, [time] is optional.
 !wingies [time]   :   searches for wing, [time] is optional.
+!upvote [food]    :   upvotes [food].
+!downvote [food]  :   downvotes [food].
 !reload         :   reloads the menu.
 !help           :   displays options and usage of commands.\n
     [building]  :   udcc/windows/seasons
@@ -177,9 +179,9 @@ async def seasons(ctx, arg=None):
 
 def is_closed(place,time):
     for bar in BUILDINGS.get(place)[TIMES[place].get(time.capitalize())]:
-        if not not bar:
+        if not any(bar):
             return False
-    return False
+    return True
 
 def search_for(substring, time):
     response = ""
@@ -254,7 +256,7 @@ async def vote(arg, food, ctx):
                             try:
                                 ARR.get(arg*(-1))[index][f_index].remove(msg.author.id)
                             except ValueError:
-                                print("Value ERR")
+                                pass
                             await ctx.channel.send(VOTE_ALIGN.get(arg).capitalize() + ' Sent!')
                             break
                         else:
@@ -293,5 +295,11 @@ async def load():
     food_likes = await load_scores('food_likes')
     food_dislikes = await load_scores('food_dislikes')
     food_list = await load_scores('food_list')
-                          
+
+@bot.command(pass_context=True)
+async def manual_save(ctx):
+    if ctx.message.author.name == 'Swidex':
+        await save()
+        await ctx.channel.send("Saved likes/dislikes!")
+    
 bot.run(DISCORD_TOKEN)
