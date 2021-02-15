@@ -266,6 +266,7 @@ async def vote(arg, food, ctx):
                             break        
                 f_index += 1
             index += 1
+            f_index = 0
 
 @bot.command(pass_context=True)
 async def upvote(ctx, food=None):
