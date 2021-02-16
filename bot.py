@@ -227,26 +227,30 @@ async def vote(arg, food, ctx):
     if food is None:
         await ctx.channel.send(INVALID_USAGE)
     else:
-        for centers in food_list:
-            for meal in centers:
-                if food in meal:
-                    await ctx.channel.send("Did you mean: *" + meal + "* from *" + TITLES[index] + "*? (y/n)")
-                    msg = await bot.wait_for('message')
-                    if msg.content == 'y':
-                        if (msg.author.id not in ARR.get(arg)[index][f_index]):
-                            ARR.get(arg)[index][f_index].append(msg.author.id)
-                            try:
-                                ARR.get(arg*(-1))[index][f_index].remove(msg.author.id)
-                            except ValueError:
-                                pass
-                            await ctx.channel.send(VOTE_ALIGN.get(arg).capitalize() + ' Sent!')
-                            break
-                        else:
-                            await ctx.channel.send('You can\'t ' + VOTE_ALIGN.get(arg) + ' a food you\'ve already ' + VOTE_ALIGN.get(arg) + 'd!')
-                            break        
-                f_index += 1
-            index += 1
-            f_index = 0
+        class Complete(Exception): pass
+        try:
+            for centers in food_list:
+                for meal in centers:
+                    if food in meal:
+                        await ctx.channel.send("Did you mean: *" + meal + "* from *" + TITLES[index] + "*? (y/n)")
+                        msg = await bot.wait_for('message')
+                        if msg.content.lower() == 'y':
+                            if (msg.author.id not in ARR.get(arg)[index][f_index]):
+                                ARR.get(arg)[index][f_index].append(msg.author.id)
+                                try:
+                                    ARR.get(arg*(-1))[index][f_index].remove(msg.author.id)
+                                except ValueError:
+                                    pass
+                                raise Complete
+                            else:
+                                await ctx.channel.send('You can\'t ' + VOTE_ALIGN.get(arg) + ' a food you\'ve already ' + VOTE_ALIGN.get(arg) + 'd!')
+                                break        
+                    f_index += 1
+                index += 1
+                f_index = 0
+            await ctx.channel.send("Couldn't find given food.")
+        except Complete:
+            await ctx.channel.send(VOTE_ALIGN.get(arg).capitalize() + ' Sent!')
 
 @bot.command(pass_context=True)
 async def upvote(ctx, food=None):
