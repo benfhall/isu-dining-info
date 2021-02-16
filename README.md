@@ -1,5 +1,5 @@
 # isu-dining-info
-python script to get meals from UDCC and Windows.
+discord bot and script to get meals from UDCC and Windows.
 
 required libraries: 
 
