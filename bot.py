@@ -40,8 +40,13 @@ async def load_menus():
     seasons = [[[]for c in range(4)] for r in range(7)]
     
 
-    BARS = [{'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3, 'Sugar Sugar': 4, 'Sprout': 5, 'Saikuron': 6, "":7},{'Simmer': 0, 'Zest': 1, 'Slice': 2, 'Savor': 3, 'Chopped': 4, 'Delish': 5,'':6},{'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2, 'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5,'':6}]
-    TIMES = [{'Breakfast': 0, 'Lunch': 1, 'Dinner': 2},{'Lunch': 0, 'Dinner': 1},{'Breakfast':0,'Lunch': 1, 'Dinner': 2, 'Daily Menu': 3}]
+    BARS = [{'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3},
+    {'Sugar Sugar': 4, 'Sprout': 5, 'Saikuron': 6, "":7},
+    {'Simmer': 0, 'Zest': 1, 'Slice': 2, 'Savor': 3, 'Chopped': 4, 'Delish': 5,'':6}
+    {'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2,'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5,'':6}]
+    TIMES = [{'Breakfast': 0, 'Lunch': 1, 'Dinner': 2},
+    {'Lunch': 0, 'Dinner': 1},
+    {'Breakfast':0,'Lunch': 1, 'Dinner': 2, 'Daily Menu': 3}]
     BUILDINGS = {0:udcc,1:windows,2:seasons}
     cindex = 0
 
@@ -65,7 +70,7 @@ async def load_menus():
                                 food_dislikes[cindex].append([])
 
         cindex += 1
-    print("Complete!")
+    print(CMP)
     
 def match_args(arg, args):
     if arg is None:
@@ -275,7 +280,7 @@ async def save():
     await save_scores('food_likes',food_likes)
     await save_scores('food_dislikes',food_dislikes)
     await save_scores('food_list',food_list)
-    print("Complete!")
+    print(CMP)
 
 async def load():
     print("Loading...")
@@ -285,7 +290,7 @@ async def load():
     food_likes = await load_scores('food_likes')
     food_dislikes = await load_scores('food_dislikes')
     food_list = await load_scores('food_list')
-    print("Complete!")
+    print(CMP)
 
 @bot.command(pass_context=True)
 async def manual_save(ctx):
