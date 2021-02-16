@@ -271,22 +271,25 @@ def get_score(food, centers):
 
 @tasks.loop(seconds=1800)
 async def save():
+    print("Saving...")
     await save_scores('food_likes',food_likes)
     await save_scores('food_dislikes',food_dislikes)
     await save_scores('food_list',food_list)
+    print("Complete!")
 
 async def load():
+    print("Loading...")
     global food_likes
     global food_dislikes
     global food_list
     food_likes = await load_scores('food_likes')
     food_dislikes = await load_scores('food_dislikes')
     food_list = await load_scores('food_list')
+    print("Complete!")
 
 @bot.command(pass_context=True)
 async def manual_save(ctx):
     if ctx.message.author.name == 'Swidex':
         await save()
-        await ctx.channel.send("Saved likes/dislikes!")
     
 bot.run(DISCORD_TOKEN)
