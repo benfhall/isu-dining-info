@@ -4,7 +4,7 @@ python script to get meals from UDCC and Windows.
 required libraries: discord.py, numpy, python-dotenv
 
 Commands:
-![building] [time]      :   find the menu for given [time] at given [building]
+![building] [time]      :   find the menu for given [time] at given [building]\n
 !search [term] [time]   :   searches for [term] at all dining centers, given [time].
 !tendies [time] :   searches for tender, [time] is optional.
 !nuggies [time] :   searches for nugget, [time] is optional.
