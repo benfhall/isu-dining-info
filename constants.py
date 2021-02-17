@@ -10,6 +10,15 @@ CMP = "Complete!"
 ALL_TIMES = ["breakfast","lunch","dinner","daily"]
 TIME_NAME = ["**Breakfast**","**Lunch**","**Dinner**","**Daily**"]
 
+STATIONS = [
+        {'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3,'Sugar Sugar': 4, 'Sprout': 5, 'Saikuron': 6, "":7},
+        {'Simmer': 0, 'Zest': 1, 'Slice': 2, 'Savor': 3, 'Chopped': 4, 'Delish': 5,'':6},
+        {'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2,'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5,'':6}]
+TIMES = [
+    {'Breakfast': 0, 'Lunch': 1, 'Dinner': 2},
+    {'Lunch': 0, 'Dinner': 1},
+    {'Breakfast':0,'Lunch': 1, 'Dinner': 2, 'Daily Menu': 3}]
+
 STATION = [
     {'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3,'Sugar Sugar': 4, 'Sprout': 5, 'Saikuron': 6, "":7},
     {'Simmer': 0, 'Zest': 1, 'Slice': 2, 'Savor': 3,'Chopped':4,'Delish':5,'':6},

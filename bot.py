@@ -6,12 +6,12 @@ import numpy as np
 from file_mgr import *
 from constants import *
 
-udcc = [[[]for c in range(3)] for r in range(8)]
-windows = [[[]for c in range(2)] for r in range(6)]
-seasons = [[[]for c in range(4)] for r in range(6)]
-food_list = np.array([[]for c in range(3)])
-food_likes = np.array([[[]]for c in range(3)])
-food_dislikes = np.array([[[]]for c in range(3)])
+udcc = [[[]for _ in range(3)] for _ in range(8)]
+windows = [[[]for _ in range(2)] for _ in range(6)]
+seasons = [[[]for _ in range(4)] for _ in range(6)]
+food_list = np.array([[]for _ in range(3)])
+food_likes = np.array([[[]]for _ in range(3)])
+food_dislikes = np.array([[[]]for _ in range(3)])
 CENTERS = {0:udcc,1:windows,2:seasons}
 
 gcontext = ssl.SSLContext()
@@ -26,12 +26,10 @@ async def load_menus():
     global udcc
     global windows
     global seasons
-    global STATIONS
-    global TIMES
-    global CENTERS
     global food_likes
     global food_dislikes
     global food_list
+    global CENTERS
 
     food_list = [[]for _ in range(3)]
     food_likes = ([[[]]for _ in range(3)])
@@ -39,15 +37,6 @@ async def load_menus():
     udcc = [[[]for _ in range(3)] for r in range(8)]
     windows = [[[]for _ in range(2)] for _ in range(7)]
     seasons = [[[]for _ in range(4)] for _ in range(7)]
-
-    STATIONS = [
-        {'Cardinal Canteen': 0, 'Picoso': 1, 'Dagwood\'s': 2, 'Parma\'s': 3,'Sugar Sugar': 4, 'Sprout': 5, 'Saikuron': 6, "":7},
-        {'Simmer': 0, 'Zest': 1, 'Slice': 2, 'Savor': 3, 'Chopped': 4, 'Delish': 5,'':6},
-        {'Hickory\'s': 0, 'Wood Grill': 1, 'Bonsai': 2,'Cocoa Bean': 3, 'Olive Branch': 4, 'Bushel Basket': 5,'':6}]
-    TIMES = [
-        {'Breakfast': 0, 'Lunch': 1, 'Dinner': 2},
-        {'Lunch': 0, 'Dinner': 1},
-        {'Breakfast':0,'Lunch': 1, 'Dinner': 2, 'Daily Menu': 3}]
     CENTERS = {0:udcc,1:windows,2:seasons}
     building_index = 0
 
@@ -84,7 +73,7 @@ def match_args(arg, args):
     else:
         return False
 
-def recommend_meals(center):
+def recommend_meals(center,rating_score,rated_food):
     """recommends meal, based on ranking at [center]"""
     response = "```"
     try:
@@ -105,8 +94,6 @@ def recommend_meals(center):
 
 def give_menu(arg, center):
     """returns the menu in a formatted way, at time ,[arg], and at place,[center]"""
-    global rating_score
-    global rated_food
     rating_score = []
     rated_food = []
     counter = 0
@@ -123,7 +110,7 @@ def give_menu(arg, center):
                     rating_score.append(get_score(food,center))
                     rated_food.append(food)
                     response += food + "\n"
-    return response + recommend_meals(center)
+    return response + recommend_meals(center,rating_score,rated_food)
 
 @bot.event
 async def on_ready():
