@@ -191,7 +191,7 @@ def search_for(substring, time):
     response = ""
     if match_args(time,ALL_TIMES) and substring is not None:
         open_centers = (center for center in range(3) if not is_closed(center,time))
-        for _ in open_centers:
+        for center in open_centers:
             for station in CENTERS.get(center):
                 matched_foods = (food for food in station[TIMES[center].get(time.capitalize())] if substring.lower() in food.lower())
                 for food in matched_foods:
