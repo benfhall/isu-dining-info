@@ -7,8 +7,8 @@ from file_mgr import *
 from constants import *
 
 udcc = [[[]for _ in range(3)] for _ in range(8)]
-windows = [[[]for _ in range(2)] for _ in range(6)]
-seasons = [[[]for _ in range(4)] for _ in range(6)]
+windows = [[[]for _ in range(2)] for _ in range(7)]
+seasons = [[[]for _ in range(4)] for _ in range(7)]
 food_list = np.array([[]for _ in range(3)])
 food_likes = np.array([[[]]for _ in range(3)])
 food_dislikes = np.array([[[]]for _ in range(3)])
@@ -34,7 +34,7 @@ async def load_menus():
     food_list = [[]for _ in range(3)]
     food_likes = ([[[]]for _ in range(3)])
     food_dislikes = ([[[]]for _ in range(3)])
-    udcc = [[[]for _ in range(3)] for r in range(8)]
+    udcc = [[[]for _ in range(3)] for _ in range(8)]
     windows = [[[]for _ in range(2)] for _ in range(7)]
     seasons = [[[]for _ in range(4)] for _ in range(7)]
     CENTERS = {0:udcc,1:windows,2:seasons}
@@ -59,6 +59,7 @@ async def add_food(building_index,station,time,food):
         CENTERS.get(building_index)[STATIONS[building_index].get(station['name'])][TIMES[building_index].get(time['section'])].append(food['name'])
     except TypeError:
         CENTERS.get(building_index)[len(STATIONS[building_index]-1)][TIMES[building_index].get(time['section'])].append(food['name'])
+        print("err")
     if food['name'] not in food_list[building_index]:
             food_list[building_index].append(food['name'])
             food_likes[building_index].append([])
@@ -80,7 +81,7 @@ def recommend_meals(center,rating_score,rated_food):
         max_index = rating_score.index(max(rating_score))
         if rating_score[max_index] != 0:
             response += "Your peers recommend the following dishes: \n\n"
-            for x in range(3):
+            for _ in range(3):
                 max_index = rating_score.index(max(rating_score))
                 if rating_score[max_index] == 0:
                     break
@@ -169,7 +170,7 @@ async def seasons(ctx, arg=None):
 def is_closed(center,time):
     """returns whether [center] is closed during [time]"""
     for station in CENTERS.get(center)[TIMES[center].get(time.capitalize())]:
-        if not any(station):
+        if any(station):
             return False
     return True
 

@@ -10,4 +10,7 @@ async def save_scores(name,old_arr):
 async def load_scores(name):
     """Load array from file"""
     with open(name, 'rb') as f:
-        return np.load(f,None,True)
+        try:
+            return np.load(f,None,True)
+        except OSError:
+            pass
