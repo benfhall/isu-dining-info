@@ -169,8 +169,8 @@ async def seasons(ctx, arg=None):
 
 def is_closed(center,time):
     """returns whether [center] is closed during [time]"""
-    for station in CENTERS.get(center)[TIMES[center].get(time.capitalize())]:
-        if any(station):
+    for station in CENTERS.get(center):
+        if any(station[TIMES[center].get(time.capitalize())]):
             return False
     return True
 
