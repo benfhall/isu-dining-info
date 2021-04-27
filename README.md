@@ -1,27 +1,32 @@
-# isu-dining-info
-discord bot and script to get meals from UDCC and Windows.
+# ISU Dining Bot
 
-required libraries: 
+ISU Dining Bot is an interface for the dining centers at Iowa State University through discord. Through the discord bot, you can search menus for breakfast, lunch, and dinner, as well as search for certain foods.
 
-    - discord.py   
-    - numpy
-    - python-dotenv
+## Required Libraries:
+  1. Python
+  2. discord.py
+  3. dotenv
+  4. urllib
+  5. json
+  6. ssl
+  7. asyncio
 
-Commands:
+## Commands:
 
-    - ![building] [time]      :   find the menu for given [time] at given [building].
-    - !search [term] [time]   :   searches for [term] at all dining centers, given [time].
-    - !tendies [time] :   searches for tender, [time] is optional.
-    - !nuggies [time] :   searches for nugget, [time] is optional.
-    - !wingies [time]   :   searches for wing, [time] is optional.
-    - !upvote [food]    :   upvotes [food].
-    - !downvote [food]  :   downvotes [food].
-    - !reload         :   reloads the menu.
-    - !help           :   displays options and usage of commands.
+```!udcc``` - Check menu of Union Drive Marketplace, optional [time].
+> Usage: `!udcc [time]`
 
+```!windows``` - Check menu of Friley Windows, optional [time].
+> Usage: `!windows [time]`
 
-Arguments:
-    
-    - [building]  :   udcc/windows/seasons
-    - [time]      :   breakfast/lunch/dinner (breakfast not available for Windows)
-    - [term]      :   any food
+```!seasons``` - Check menu of Seasons Marketplace, optional [time].
+> Usage: `!seasons [time]`
+
+```!search``` - Returns location of [food] if found, optional [time].
+> Usage: `!seasons "[substring]" [time]`
+
+> Aliases: `!tendies`, `!wingies`, `!nuggies`,
+
+```!reload``` - Reloads the menu for all dining centers.
+
+```!help``` - Returns link for commands, and invite link.
