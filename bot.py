@@ -133,7 +133,10 @@ async def menu_pagination(ctx, embeds, reactions, starting):
                     await msg.add_reaction(reactions[index])
                     index = x
             await msg.remove_reaction(reactions[index],bot.user)
-            await msg.remove_reaction(reactions[index],ctx.author)
+            try:
+                await msg.remove_reaction(reactions[index],ctx.author)
+            except discord.errors.Forbidden:
+                pass
             await msg.edit(embed=embeds[index])
         except asyncio.TimeoutError:
             break
