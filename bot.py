@@ -8,6 +8,7 @@ from constants import *
 udcc = [[[]for _ in range(3)] for _ in range(8)]
 windows = [[[]for _ in range(2)] for _ in range(7)]
 seasons = [[[]for _ in range(4)] for _ in range(7)]
+mu = [[[]for _ in range(3)] for _ in range(7)]
 
 CENTERS = {0:udcc,1:windows,2:seasons}
 gcontext = ssl.SSLContext()
@@ -36,9 +37,9 @@ def give_menu(arg, center):
     )
     embed.set_thumbnail(url=THUMBNAIL[center])
     if is_closed(center, arg):
-        embed.description = "Closed for " +  TIME_NAME[TIMES[center].get(arg)+OFFSET[center]]
+        embed.description = "Closed for " +  TIME_NAMES[center][TIMES[center].get(arg)]
     else:
-        embed.description = TIME_NAME[TIMES[center].get(arg)+OFFSET[center]]
+        embed.description = TIME_NAMES[center][TIMES[center].get(arg)]
         counter = 0
         for station in CENTERS.get(center):
             if station[TIMES[center].get(arg)]:
@@ -55,7 +56,7 @@ def is_closed(center,time):
     """returns whether [center] is closed during [time]"""
     for station in CENTERS.get(center):
         try:
-            if any(station[TIMES[center].get(time.capitalize())]):
+            if any(station[TIMES[center].get(time.title())]):
                 return False
         except TypeError:
             return True
@@ -67,14 +68,14 @@ def search_for(ctx, substring, time):
     index = 0
     embed = discord.Embed(
         title="Search Results",
-        description=substring + " @ " + time.capitalize(),
+        description=substring + " @ " + time.title(),
         color=0xE51837
     )
     sorted_foods = []
     for center in open_centers:
         sorted_foods.append([TITLES[index],""])
         for station in CENTERS.get(center):
-            matched_foods = (food for food in station[TIMES[center].get(time.capitalize())] if substring.lower() in food.lower())
+            matched_foods = (food for food in station[TIMES[center].get(time.title())] if substring.lower() in food.lower())
             for food in matched_foods:
                 sorted_foods[index][1] += food + "\n"
         index += 1
@@ -94,12 +95,14 @@ async def load_menus():
     global udcc
     global windows
     global seasons
+    global mu
     global CENTERS
 
     udcc = [[[]for _ in range(3)] for _ in range(8)]
     windows = [[[]for _ in range(2)] for _ in range(7)]
     seasons = [[[]for _ in range(4)] for _ in range(7)]
-    CENTERS = {0:udcc,1:windows,2:seasons}
+    mu = [[[]for _ in range(3)] for _ in range(7)]
+    CENTERS = {0:udcc,1:windows,2:seasons,3:mu}
     building_index = 0
 
     print('Reloading Menus...')
@@ -146,8 +149,7 @@ async def add_food(building_index,station,time,food):
     try:
         CENTERS.get(building_index)[STATIONS[building_index].get(station)][TIMES[building_index].get(time['section'])].append(food['name'])
     except TypeError:
-        CENTERS.get(building_index)[len(STATIONS[building_index]-1)][TIMES[building_index].get(time['section'])].append(food['name'])
-        print("err")
+        CENTERS.get(building_index)[len(STATION_TITLES[building_index])-1][TIMES[building_index].get(time['section'])].append(food['name'])
 
 # DISCORD COMMANDS
 
@@ -175,10 +177,10 @@ async def udcc(ctx, arg="dinner"):
     args = ["breakfast","lunch","dinner"]
     if not match_args(arg, args):
         arg = "dinner"
-    embeds = [give_menu(args[0].capitalize(),0),give_menu(args[1].capitalize(),0),give_menu(args[2].capitalize(),0)]
+    embeds = [give_menu(args[0].title(),0),give_menu(args[1].title(),0),give_menu(args[2].title(),0)]
     for embed in embeds:
         embed.set_footer(text="🥞 for breakfast\n🥪 for lunch\n🍖 for dinner")
-    await menu_pagination(ctx, embeds, ['🥞','🥪','🍖'], TIMES[0].get(arg.capitalize()))
+    await menu_pagination(ctx, embeds, ['🥞','🥪','🍖'], TIMES[0].get(arg.title()))
 
 @bot.command(pass_context=True)
 async def windows(ctx, arg="dinner"):
@@ -186,10 +188,10 @@ async def windows(ctx, arg="dinner"):
     args = ["lunch","dinner"]
     if not match_args(arg, args):
         arg = "dinner"
-    embeds = [give_menu(args[0].capitalize(),1),give_menu(args[1].capitalize(),1)]
+    embeds = [give_menu(args[0].title(),1),give_menu(args[1].title(),1)]
     for embed in embeds:
         embed.set_footer(text="🥪 for lunch\n🍖 for dinner")
-    await menu_pagination(ctx, embeds, ['🥪','🍖'], TIMES[1].get(arg.capitalize()))
+    await menu_pagination(ctx, embeds, ['🥪','🍖'], TIMES[1].get(arg.title()))
 
 @bot.command(pass_context=True)
 async def seasons(ctx, arg="dinner"):
@@ -197,10 +199,20 @@ async def seasons(ctx, arg="dinner"):
     args = ["breakfast","lunch","dinner"]
     if not match_args(arg, args):
         arg = "dinner"
-    embeds = [give_menu(args[0].capitalize(),2),give_menu(args[1].capitalize(),2),give_menu(args[2].capitalize(),2)]
+    embeds = [
+        give_menu(args[0].title(),2),
+        give_menu(args[1].title(),2),
+        give_menu(args[2].title(),2)
+        ]
     for embed in embeds:
         embed.set_footer(text="🥞 for breakfast\n🥪 for lunch\n🍖 for dinner")
-    await menu_pagination(ctx, embeds, ['🥞','🥪','🍖'], TIMES[2].get(arg.capitalize()))
+    await menu_pagination(ctx, embeds, ['🥞','🥪','🍖'], TIMES[2].get(arg.title()))
+
+@bot.command(pass_context=True)
+async def mu(ctx):
+    """command for giving mu menu."""
+    embed = give_menu("Lunch",3)
+    await ctx.channel.send(embed=embed)
 
 @bot.command(pass_context=True)
 async def search(ctx, substring=None, time="dinner"):
@@ -211,7 +223,7 @@ async def search(ctx, substring=None, time="dinner"):
     embeds = [search_for(ctx, substring, "breakfast"),search_for(ctx, substring, "lunch"),search_for(ctx, substring, "dinner")]
     for embed in embeds:
         embed.set_footer(text="🥞 for breakfast\n🥪 for lunch\n🍖 for dinner")
-    await menu_pagination(ctx, embeds, ['🥞','🥪','🍖'], TIMES[0].get(time.capitalize()))
+    await menu_pagination(ctx, embeds, ['🥪','🕓','🍞'], TIMES[0].get(time.title()))
 
 @bot.command(pass_context=True)
 async def tendies(ctx, time="dinner"):

@@ -22,6 +22,9 @@ ISU Dining Bot is an interface for the dining centers at Iowa State University t
 ```!seasons``` - Check menu of Seasons Marketplace, optional [time].
 > Usage: `!seasons [time]`
 
+```!mu``` - Check menu of Memorial Union Food Court.
+> Usage: `!mu`
+
 ```!search``` - Returns location of [food] if found, optional [time].
 > Usage: `!seasons "[substring]" [time]`
 
