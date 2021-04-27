@@ -32,7 +32,7 @@ def give_menu(arg, center):
     sorted_foods = []
     embed = discord.Embed(
         title=TITLES[center],
-        color=bot.user.color
+        color=0xE51837
     )
     embed.set_thumbnail(url=THUMBNAIL[center])
     if is_closed(center, arg):
@@ -68,7 +68,7 @@ def search_for(ctx, substring, time):
     embed = discord.Embed(
         title="Search Results",
         description=substring + " @ " + time.capitalize(),
-        color=bot.user.color
+        color=0xE51837
     )
     sorted_foods = []
     for center in open_centers:
@@ -162,7 +162,7 @@ async def help(ctx, time=None):
     """prints user help info"""
     embed = discord.Embed(
         title="ISU Dining Help",
-        color=bot.user.color
+        color=0xE51837
     )
     embed.set_thumbnail(url=bot.user.avatar_url)
     embed.add_field(name="Commands", value="Find the commands [here](https://github.com/Swidex/isu-dining-info)")
@@ -173,49 +173,45 @@ async def help(ctx, time=None):
 async def udcc(ctx, arg="dinner"):
     """command for giving udcc menu, given time, [arg]."""
     args = ["breakfast","lunch","dinner"]
-    if match_args(arg, args):
-        embeds = [give_menu(args[0].capitalize(),0),give_menu(args[1].capitalize(),0),give_menu(args[2].capitalize(),0)]
-        for embed in embeds:
-            embed.set_footer(text="🥞 for breakfast\n🥪 for lunch\n🍖 for dinner")
-        await menu_pagination(ctx, embeds, ['🥞','🥪','🍖'], TIMES[0].get(arg.capitalize()))
-    else:
-        await ctx.channel.send(INVALID_USAGE)
+    if not match_args(arg, args):
+        arg = "dinner"
+    embeds = [give_menu(args[0].capitalize(),0),give_menu(args[1].capitalize(),0),give_menu(args[2].capitalize(),0)]
+    for embed in embeds:
+        embed.set_footer(text="🥞 for breakfast\n🥪 for lunch\n🍖 for dinner")
+    await menu_pagination(ctx, embeds, ['🥞','🥪','🍖'], TIMES[0].get(arg.capitalize()))
 
 @bot.command(pass_context=True)
 async def windows(ctx, arg="dinner"):
     """command for giving windows menu, given time,[arg]."""
     args = ["lunch","dinner"]
-    if match_args(arg, args):
-        embeds = [give_menu(args[0].capitalize(),1),give_menu(args[1].capitalize(),1)]
-        for embed in embeds:
-            embed.set_footer(text="🥪 for lunch\n🍖 for dinner")
-        await menu_pagination(ctx, embeds, ['🥪','🍖'], TIMES[1].get(arg.capitalize()))
-    else:
-        await ctx.channel.send(INVALID_USAGE)
+    if not match_args(arg, args):
+        arg = "dinner"
+    embeds = [give_menu(args[0].capitalize(),1),give_menu(args[1].capitalize(),1)]
+    for embed in embeds:
+        embed.set_footer(text="🥪 for lunch\n🍖 for dinner")
+    await menu_pagination(ctx, embeds, ['🥪','🍖'], TIMES[1].get(arg.capitalize()))
 
 @bot.command(pass_context=True)
 async def seasons(ctx, arg="dinner"):
     """command for giving seasons menu, given time,[arg]."""
     args = ["breakfast","lunch","dinner"]
-    if match_args(arg, args):
-        embeds = [give_menu(args[0].capitalize(),2),give_menu(args[1].capitalize(),2),give_menu(args[2].capitalize(),2)]
-        for embed in embeds:
-            embed.set_footer(text="🥞 for breakfast\n🥪 for lunch\n🍖 for dinner")
-        await menu_pagination(ctx, embeds, ['🥞','🥪','🍖'], TIMES[2].get(arg.capitalize()))
-    else:
-        await ctx.channel.send(INVALID_USAGE)
+    if not match_args(arg, args):
+        arg = "dinner"
+    embeds = [give_menu(args[0].capitalize(),2),give_menu(args[1].capitalize(),2),give_menu(args[2].capitalize(),2)]
+    for embed in embeds:
+        embed.set_footer(text="🥞 for breakfast\n🥪 for lunch\n🍖 for dinner")
+    await menu_pagination(ctx, embeds, ['🥞','🥪','🍖'], TIMES[2].get(arg.capitalize()))
 
 @bot.command(pass_context=True)
 async def search(ctx, substring=None, time="dinner"):
     """discord command for searching for [substring] at [time]."""
     args = ["breakfast","lunch","dinner"]
-    if match_args(time, args) and substring is not None:
-        embeds = [search_for(ctx, substring, "breakfast"),search_for(ctx, substring, "lunch"),search_for(ctx, substring, "dinner")]
-        for embed in embeds:
-            embed.set_footer(text="🥞 for breakfast\n🥪 for lunch\n🍖 for dinner")
-        await menu_pagination(ctx, embeds, ['🥞','🥪','🍖'], TIMES[0].get(time.capitalize()))
-    else:
-        await ctx.channel.send(INVALID_USAGE)
+    if not match_args(time, args):
+        time = "dinner"
+    embeds = [search_for(ctx, substring, "breakfast"),search_for(ctx, substring, "lunch"),search_for(ctx, substring, "dinner")]
+    for embed in embeds:
+        embed.set_footer(text="🥞 for breakfast\n🥪 for lunch\n🍖 for dinner")
+    await menu_pagination(ctx, embeds, ['🥞','🥪','🍖'], TIMES[0].get(time.capitalize()))
 
 @bot.command(pass_context=True)
 async def tendies(ctx, time="dinner"):
@@ -235,7 +231,13 @@ async def wingies(ctx, time="dinner"):
 @bot.command(pass_context=True)
 async def reload(ctx):
     """discord command for reloading menus."""
+    embed = discord.Embed(
+        title="Reloading Menus...",
+        color=0xE51837
+    )
+    msg = await ctx.channel.send(embed=embed)
     await load_menus()
-    await ctx.channel.send("Reloaded Menus!")
+    embed.title="Successfully Reloaded Menus!"
+    await msg.edit(embed=embed)
 
 bot.run(DISCORD_TOKEN)

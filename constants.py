@@ -20,7 +20,6 @@ TIMES = [
     {'Breakfast': 0, 'Lunch': 1, 'Dinner': 2},
     {'Lunch': 0, 'Dinner': 1},
     {'Breakfast':0,'Lunch': 1, 'Dinner': 2}]
-INVALID_USAGE = "**Invalid Usage.***use !help for help.*"
 URLS = [
     "https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=union-drive-marketplace-2-2",
     "https://www.dining.iastate.edu/wp-json/dining/menu-hours/get-single-location/?slug=friley-windows-2-2",
