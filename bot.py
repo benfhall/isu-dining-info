@@ -139,7 +139,9 @@ async def menu_pagination(ctx, embeds, reactions, starting):
             try:
                 await msg.remove_reaction(reactions[index],ctx.author)
             except discord.errors.Forbidden:
-                pass
+                perms = await ctx.channel.send("```Please give me \"Manage Messages\" permissions in roles so I can remove your reaction's for you!```")
+                await asyncio.sleep(5)
+                await perms.delete()
             await msg.edit(embed=embeds[index])
         except asyncio.TimeoutError:
             break
