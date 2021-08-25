@@ -125,14 +125,14 @@ async def add_station(building_index, station_name):
     if station_name in STATIONS[building_index]:
         return True
     else:
-        STATIONS[building_index][station_name]
+        STATIONS[building_index].append(station_name)
         return False
 
 async def add_food(building_index,station_name,time,food_name):
     """adds food to arrays"""
     await add_station(building_index,station_name)
     print(station_name +  ": " + food_name)
-    CENTERS.get(building_index)[STATIONS[building_index].indexOf(station_name)][TIMES[building_index].get(time['section'])].append(food_name)
+    CENTERS.get(building_index)[STATIONS[building_index].index(station_name)][TIMES[building_index].get(time['section'])].append(food_name)
 
 async def menu_pagination(ctx, embeds, reactions, starting):
     """function to print pagination embeds"""
