@@ -131,7 +131,6 @@ async def add_station(building_index, station_name):
 async def add_food(building_index,station_name,time,food_name):
     """adds food to arrays"""
     await add_station(building_index,station_name)
-    print(station_name +  ": " + food_name)
     CENTERS.get(building_index)[STATIONS[building_index].index(station_name)][TIMES[building_index].get(time['section'])].append(food_name)
 
 async def menu_pagination(ctx, embeds, reactions, starting):
