@@ -43,7 +43,7 @@ def give_menu(arg, center):
         counter = 0
         for station in CENTERS.get(center):
             if station[TIMES[center].get(arg)]:
-                sorted_foods.append([STATION_TITLES[center][counter],""])
+                sorted_foods.append([STATIONS[center][counter],""])
                 for food in station[TIMES[center].get(arg)]:
                     sorted_foods[counter][1] += food + "\n"
                 counter += 1
@@ -111,12 +111,28 @@ async def load_menus():
         with urllib.request.urlopen(request, context=gcontext) as url:
             data = json.loads(url.read().decode())
         for time in data[0]["menus"]:
+            if time['section'] not in TIMES[building_index]:
+                continue
             for station in time["menuDisplays"]:
                 found_foods = [foods for subfood in station['categories'] for foods in subfood['menuItems']]
                 for food in found_foods:
-                    await add_food(building_index,station['name'],time,food)
+                    await add_food(building_index,station['name'],time,food['name'])
         building_index += 1
     print(CMP)
+
+async def add_station(building_index, station_name):
+    """checks to see if station exists, if not add it."""
+    if station_name in STATIONS[building_index]:
+        return True
+    else:
+        STATIONS[building_index][station_name]
+        return False
+
+async def add_food(building_index,station_name,time,food_name):
+    """adds food to arrays"""
+    await add_station(building_index,station_name)
+    print(station_name +  ": " + food_name)
+    CENTERS.get(building_index)[STATIONS[building_index].indexOf(station_name)][TIMES[building_index].get(time['section'])].append(food_name)
 
 async def menu_pagination(ctx, embeds, reactions, starting):
     """function to print pagination embeds"""
@@ -145,13 +161,6 @@ async def menu_pagination(ctx, embeds, reactions, starting):
             await msg.edit(embed=embeds[index])
         except asyncio.TimeoutError:
             break
-
-async def add_food(building_index,station,time,food):
-    """adds food to arrays"""
-    try:
-        CENTERS.get(building_index)[STATIONS[building_index].get(station)][TIMES[building_index].get(time['section'])].append(food['name'])
-    except TypeError:
-        CENTERS.get(building_index)[len(STATION_TITLES[building_index])-1][TIMES[building_index].get(time['section'])].append(food['name'])
 
 # DISCORD COMMANDS
 
