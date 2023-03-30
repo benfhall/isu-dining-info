@@ -83,12 +83,17 @@ async def on_ready():
         await d.populate()
 
 @bot.command(pass_context=True)
-async def udcc(ctx, arg="dinner"):
+async def udcc(ctx, section):
     """command for giving udcc menu, given time, [arg]."""
-    args = ["breakfast","lunch","dinner"]
-    embeds = []
+    # check if section exists
     dining_hall = globals()['dining_halls'][0]
-    section = 0
+    FOUND_SECTION = False
+    for s in dining_hall:
+        if s.name == section:
+            FOUND_SECTION=True
+            break
+
+    embeds = []
     for x in range(len(dining_hall.sections[section].menus)):
         embeds.append(give_menu(dining_hall,section,x-1))
 
