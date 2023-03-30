@@ -9,3 +9,14 @@ HEADERS = {
         'Accept-Language': 'en-US,en;q=0.8',
         'Connection': 'keep-alive'
     }
+EMOJIS = [
+    '1️⃣',
+    '2️⃣',
+    '3️⃣',
+    '4️⃣',
+    '5️⃣',
+    '6️⃣',
+    '7️⃣',
+    '8️⃣',
+    '9️⃣'
+]
